@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<htmcan l lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus SOS & Security Command Center</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              red: '#EF4444',
+              darkRed: '#991B1B',
+              orange: '#F97316',
+              amber: '#F59E0B',
+              blue: '#3B82F6',
+              green: '#10B981',
+              dark: '#0F172A'
+            }
+          },
+          animation: {
+            'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .sos-btn-shadow {
+      box-shadow: 0 0 50px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .pulse-ring {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: pulse-ring-anim 1.5s infinite;
+    }
+
+    @keyframes pulse-ring-anim {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+
+<body class="h-full flex flex-col antialiased text-slate-100 bg-slate-950 selection:bg-red-500 selection:text-white">
+
+  <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo / Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-900/40">
+          <i class="fa-solid font-bold fa-shield-halved text-xl text-white"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
+            Campus<span class="text-red-500">SOS</span>
+          </span>
+          <span class="hidden sm:inline-block text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">
+            Emergency Network
+          </span>
+        </div>
+      </div>
+
+      <!-- Real-time Sync Indicator & Role Switcher -->
+      <div class="flex items-center space-x-3 sm:space-x-4">
+        <!-- Live Status Pill -->
+        <div id="connectionStatus" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 text-xs font-medium border border-slate-700 text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="syncText">System Live</span>
+        </div>
+
+        <!-- Role Toggle Tabs -->
+        <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center">
+          <button id="navStudentBtn" onclick="switchRole('student')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-red-600 text-white shadow-md">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>Student SOS</span>
+          </button>
+          <button id="navSecurityBtn" onclick="switchRole('security')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-shield-cat"></i>
+            <span>Security Command</span>
+            <span id="navAlertBadge" class="hidden ml-1 px-1.5 py-0.2 bg-red-500 text-white text-[10px] rounded-full animate-bounce">0</span>
+          </button>
+        </div>
+
+        <!-- User Info / Quick Logout Modal Trigger -->
+        <button onclick="toggleUserModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition-colors" title="User Profile / Role Info">
+          <i class="fa-solid fa-user-gear"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- User / System Modal -->
+  <div id="userModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+      <button onclick="toggleUserModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-id-card text-red-500"></i> Authentication & Roles
+      </h3>
+      <p class="text-xs text-slate-400 mb-6">Simulated single-session portal. You are currently logged in as a test user.</p>
+      
+      <div class="space-y-4">
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400">Current Student Session</div>
+            <div class="font-medium text-slate-200 text-sm">Alex Morgan (ID: STU-88219)</div>
+            <div class="text-[11px] text-slate-500">Hostel Block B, Room 304</div>
+          </div>
+          <span class="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs rounded border border-blue-500/20">Student</span>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400">Security Access Level</div>
+            <div class="font-medium text-slate-200 text-sm">Commander J. Miller (Officer 04)</div>
+            <div class="text-[11px] text-slate-500">Main Gate Command Center</div>
+          </div>
+          <span class="px-2 py-1 bg-red-500/10 text-red-400 text-xs rounded border border-red-500/20">Security Admin</span>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="resetDemoData()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Reset System Demo Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main View Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: STUDENT EMERGENCY SOS PORTAL -->
+    <!-- ========================================================================= -->
+    <section id="studentPortalView" class="space-y-6">
+      
+      <!-- Top Alert Banner -->
+      <div class="bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 border border-red-500/30 rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+            <i class="fa-solid fa-triangle-exclamation text-2xl animate-pulse"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">Campus Emergency Active Dispatch System</h2>
+            <p class="text-xs sm:text-sm text-slate-300">In immediate life-threatening danger? Press the SOS Panic Button or call Campus Security Hotline immediately.</p>
+          </div>
+        </div>
+        <a href="tel:911" class="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-red-900/40 shrink-0">
+          <i class="fa-solid fa-phone-volume"></i>
+          <span>Call Hotine: (555) 019-911</span>
+        </a>
+      </div>
+
+      <!-- Main SOS Action Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Quick Panic SOS Button Panel (5 Cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden glass-card">
+          <div class="absolute inset-0 bg-gradient-to-b from-red-600/5 to-transparent pointer-events-none"></div>
+
+          <span class="text-xs font-bold text-red-400 tracking-wider uppercase bg-red-950/60 border border-red-800/50 px-3 py-1 rounded-full mb-6">
+            Instant Dispatch
+          </span>
+
+          <!-- Interactive Panic Button Container -->
+          <div class="relative my-4 flex items-center justify-center">
+            <!-- Pulsing outer rings when armed or active -->
+            <div id="sosButtonPulse" class="absolute w-56 h-56 sm:w-64 sm:h-64 rounded-full pulse-ring pointer-events-none"></div>
+
+            <button id="sosPanicBtn" onclick="triggerPanicCountdown()" class="w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-gradient-to-b from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white font-black text-2xl flex flex-col items-center justify-center shadow-2xl sos-btn-shadow transition-all duration-200 active:scale-95 group relative z-10 border-4 border-red-400/40">
+              <i class="fa-solid fa-hand-fist text-4xl sm:text-5xl mb-2 group-hover:scale-110 transition-transform"></i>
+              <span id="sosBtnLabel" class="tracking-wider uppercase">PRESS SOS</span>
+              <span class="text-[10px] text-red-100 font-normal opacity-80 mt-1">Hold for Quick Dispatch</span>
+            </button>
+          </div>
+
+          <!-- Countdown Overlay Modal/Badge -->
+          <div id="sosCountdownContainer" class="hidden my-2 flex flex-col items-center">
+            <div class="text-3xl font-extrabold text-red-500 animate-bounce mb-1" id="sosTimerText">03</div>
+            <p class="text-xs text-slate-300">Triggering high-priority campus dispatch in <span id="sosTimerNum">3</span>s...</p>
+            <button onclick="cancelPanicCountdown()" class="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-lg border border-slate-700">
+              <i class="fa-solid fa-xmark"></i> Cancel Emergency
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-400 max-w-xs mt-4">
+            Pressing SOS sends your real-time campus coordinates and alerts the security control room automatically.
+          </p>
+        </div>
+
+        <!-- Right: Detailed Incident Report Form (7 Cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 glass-card">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-file-circle-exclamation text-amber-500"></i> Submit Incident Report
+              </h3>
+              <p class="text-xs text-slate-400">Provide details for non-instant or specific emergency events</p>
+            </div>
+            <span class="text-xs text-slate-500"><i class="fa-solid fa-lock"></i> Confidential</span>
+          </div>
+
+          <form id="incidentReportForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <!-- Row 1: Incident Type & Severity -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Incident Category *</label>
+                <select id="reportCategory" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-red-500 transition">
+                  <option value="Medical Emergency">🚑 Medical Emergency</option>
+                  <option value="Security / Threat">🚨 Security / Active Threat</option>
+                  <option value="Fire Incident">🔥 Fire / Smoke Alarm</option>
+                  <option value="Harassment / Stalking">⚠️ Harassment / Stalking</option>
+                  <option value="Infrastructure Hazard">🏗️ Infrastructure / Electrical Hazard</option>
+                  <option value="Suspicious Activity">👁️ Suspicious Activity</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Severity Level *</label>
+                <select id="reportSeverity" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-red-500 transition">
+                  <option value="Critical" class="text-red-400 font-bold">🔴 Critical (Immediate Threat)</option>
+                  <option value="High" class="text-orange-400">🟠 High Priority</option>
+                  <option value="Medium" selected class="text-amber-400">🟡 Medium Risk</option>
+                  <option value="Low" class="text-emerald-400">🟢 Low / Non-Urgent</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 2: Location Selection & Coordinates -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Campus Location Block *</label>
+                <select id="reportLocation" onchange="updateSelectedLocationFromDropdown()" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-red-500 transition">
+                  <option value="Hostel Block A (North)">Hostel Block A (North Wing)</option>
+                  <option value="Hostel Block B (South)" selected>Hostel Block B (South Wing)</option>
+                  <option value="Central Library & Quad">Central Library & Quad</option>
+                  <option value="Science & Tech Hub (Block C)">Science & Tech Hub (Block C)</option>
+                  <option value="Student Activity Center">Student Activity Center</option>
+                  <option value="Sports Complex & Stadium">Sports Complex & Stadium</option>
+                  <option value="Main Administrative Building">Main Administrative Building</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">GPS Simulation Pin</label>
+                <div class="flex items-center space-x-2">
+                  <input type="text" id="reportCoords" readonly value="X: 420, Y: 280" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-400 focus:outline-none">
+                  <button type="button" onclick="simulateGpsFix()" class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-xl border border-slate-700 shrink-0" title="Get GPS">
+                    <i class="fa-solid fa-location-crosshairs text-red-400"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Description -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Detailed Description *</label>
+              <textarea id="reportDescription" rows="3" required placeholder="Describe the situation clearly (e.g. broken window, person requiring medical assistance, smoke in hallway...)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-red-500 transition"></textarea>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center justify-end space-x-3 pt-2">
+              <button type="reset" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition">
+                Clear
+              </button>
+              <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-900/30 transition flex items-center space-x-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Submit Emergency Alert</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Student Incident History Section -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 glass-card">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> My Reported Emergencies
+            </h3>
+            <p class="text-xs text-slate-400">Track status updates and security responses to your submissions</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-slate-400">Auto-refresh:</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800">
+                <th class="pb-3 font-semibold">Incident ID</th>
+                <th class="pb-3 font-semibold">Timestamp</th>
+                <th class="pb-3 font-semibold">Type</th>
+                <th class="pb-3 font-semibold">Location</th>
+                <th class="pb-3 font-semibold">Severity</th>
+                <th class="pb-3 font-semibold">Status</th>
+                <th class="pb-3 font-semibold text-right">Details</th>
+              </tr>
+            </thead>
+            <tbody id="studentHistoryTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: CAMPUS SECURITY COMMAND CENTER DASHBOARD -->
+    <!-- ========================================================================= -->
+    <section id="securityDashboardView" class="hidden space-y-6">
+      
+      <!-- Top Metrics Dashboard Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Stat 1 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 glass-card flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Total Incidents Today</div>
+            <div class="text-2xl font-black text-white mt-1" id="statTotalIncidents">0</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+            <i class="fa-solid fa-bullhorn text-lg"></i>
+          </div>
+        </div>
+
+        <!-- Stat 2 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 glass-card flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Active Emergencies</div>
+            <div class="text-2xl font-black text-red-500 mt-1" id="statActiveIncidents">0</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20">
+            <i class="fa-solid fa-circle-exclamation text-lg animate-pulse"></i>
+          </div>
+        </div>
+
+        <!-- Stat 3 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 glass-card flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Avg Response Time</div>
+            <div class="text-2xl font-black text-amber-400 mt-1">2.4m</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+            <i class="fa-solid fa-stopwatch text-lg"></i>
+          </div>
+        </div>
+
+        <!-- Stat 4 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 glass-card flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Officers On Duty</div>
+            <div class="text-2xl font-black text-emerald-400 mt-1">12</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+            <i class="fa-solid fa-user-shield text-lg"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Command Split Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Live Emergency Feed (5 Cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-5 glass-card flex flex-col h-[680px]">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center space-x-2">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <h3 class="font-bold text-white text-base">Live Security Feed</h3>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <!-- Audio Mute Switch -->
+              <button id="audioToggleBtn" onclick="toggleAudioAlerts()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700 flex items-center gap-1.5" title="Toggle Sound">
+                <i class="fa-solid fa-volume-high text-red-400" id="audioIcon"></i>
+                <span class="text-[10px]">Sound On</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Feed Filter Bar -->
+          <div class="flex items-center space-x-2 mb-3">
+            <button onclick="filterFeed('all')" id="filterAllBtn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white">All</button>
+            <button onclick="filterFeed('Pending')" id="filterPendingBtn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Pending</button>
+            <button onclick="filterFeed('Dispatched')" id="filterDispatchedBtn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Dispatched</button>
+            <button onclick="filterFeed('Resolved')" id="filterResolvedBtn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Resolved</button>
+          </div>
+
+          <!-- Incident Scrollable Cards -->
+          <div id="liveSecurityFeed" class="flex-1 overflow-y-auto space-y-3 pr-1">
+            <!-- Dynamically Populated -->
+          </div>
+        </div>
+
+        <!-- Right Column: Campus Security Interactive Map & Incident Inspector (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6 flex flex-col">
+          
+          <!-- Interactive Map Container -->
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 glass-card relative overflow-hidden flex-1 flex flex-col min-h-[380px]">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-map-location-dot text-red-500"></i>
+                <h3 class="font-bold text-white text-sm sm:text-base">Interactive Campus Command Map</h3>
+              </div>
+              <div class="flex items-center space-x-3 text-[11px] text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Critical</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> High</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Med</span>
+              </div>
+            </div>
+
+            <!-- Canvas Map Element -->
+            <div class="relative w-full flex-1 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
+              <canvas id="campusMapCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+              
+              <!-- Map Instruction Tooltip -->
+              <div class="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-400 backdrop-blur-sm pointer-events-none">
+                <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Click map pin to inspect emergency
+              </div>
+            </div>
+          </div>
+
+          <!-- Incident Detail Control Box (When Selected) -->
+          <div id="incidentInspectorCard" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 glass-card">
+            <div id="inspectorContent" class="text-xs text-slate-400 text-center py-6">
+              <i class="fa-solid fa-hand-pointer text-2xl text-slate-600 mb-2 block"></i>
+              Select an incident from the live feed or campus map to manage response and dispatch officers.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- System Incident Log Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 glass-card">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-boxes-packing text-slate-400"></i> Campus Security Incident Archive
+            </h3>
+            <p class="text-xs text-slate-400">Comprehensive log of all emergency triggers and resolutions</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="logSearchInput" onkeyup="filterLogTable()" placeholder="Search incidents..." class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-red-500">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800">
+                <th class="pb-3 font-semibold">Incident ID</th>
+                <th class="pb-3 font-semibold">Timestamp</th>
+                <th class="pb-3 font-semibold">Category</th>
+                <th class="pb-3 font-semibold">Reporter</th>
+                <th class="pb-3 font-semibold">Location</th>
+                <th class="pb-3 font-semibold">Severity</th>
+                <th class="pb-3 font-semibold">Status</th>
+                <th class="pb-3 font-semibold">Assigned Officer</th>
+              </tr>
+            </thead>
+            <tbody id="securityLogTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-600">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>Campus Security Dispatch & SOS Emergency System &copy; 2026</div>
+      <div class="flex items-center space-x-4">
+        <span>Emergency Line: <strong>911 / Ext 4040</strong></span>
+        <span>•</span>
+        <span>24/7 Monitoring Active</span>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT ARCHITECTURE & REALTIME LOGIC -->
+  <!-- ========================================================================= -->
+  <script type="module">
+    // Firebase Web SDK Imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global State Container
+    window.AppState = {
+      role: 'student', // 'student' | 'security'
+      currentUserId: 'STU-88219',
+      currentUserName: 'Alex Morgan',
+      incidents: [],
+      selectedIncidentId: null,
+      audioEnabled: true,
+      panicCountdownTimer: null,
+      panicCountdownValue: 3,
+      filterCategory: 'all',
+      db: null,
+      auth: null,
+      isFirebaseActive: false,
+      appId: typeof __app_id !== 'undefined' ? __app_id : 'campus-sos-app'
+    };
+
+    // Location coordinates mapping for Map Render (Canvas coordinates 600x350)
+    window.CampusLocations = {
+      'Hostel Block A (North)': { x: 140, y: 80 },
+      'Hostel Block B (South)': { x: 180, y: 250 },
+      'Central Library & Quad': { x: 320, y: 170 },
+      'Science & Tech Hub (Block C)': { x: 450, y: 100 },
+      'Student Activity Center': { x: 300, y: 280 },
+      'Sports Complex & Stadium': { x: 500, y: 260 },
+      'Main Administrative Building': { x: 120, y: 170 }
+    };
+
+    // Initial Pre-populated Demo Incidents
+    const initialDemoIncidents = [
+      {
+        id: "SOS-9081",
+        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
+        category: "Medical Emergency",
+        severity: "Critical",
+        location: "Hostel Block B (South)",
+        coords: { x: 180, y: 250 },
+        description: "Student collapsed near the main entrance stairwell. Breathing but unresponsive.",
+        reporter: "Alex Morgan (STU-88219)",
+        status: "Dispatched", // Pending, Dispatched, On Scene, Resolved
+        assignedOfficer: "Officer B. Davis",
+        notes: "Paramedics notified at 10:14 PM."
+      },
+      {
+        id: "SOS-9078",
+        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+        category: "Infrastructure Hazard",
+        severity: "Medium",
+        location: "Science & Tech Hub (Block C)",
+        coords: { x: 450, y: 100 },
+        description: "Exposed electrical wiring sparking near Lab 202 door.",
+        reporter: "Dr. K. Vance",
+        status: "Pending",
+        assignedOfficer: "Unassigned",
+        notes: ""
+      },
+      {
+        id: "SOS-9065",
+        timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
+        category: "Harassment / Stalking",
+        severity: "High",
+        location: "Central Library & Quad",
+        coords: { x: 320, y: 170 },
+        description: "Suspicious individual following students near library rear exits.",
+        reporter: "Sarah T.",
+        status: "Resolved",
+        assignedOfficer: "Officer M. Rodriguez",
+        notes: "Individual escorted off campus by patrol unit."
+      }
+    ];
+
+    // Initialize Application
+    window.addEventListener('DOMContentLoaded', async () => {
+      await setupFirebaseOrFallback();
+      initCanvasMap();
+      renderAllViews();
+      
+      // Auto resize map canvas on window resize
+      window.addEventListener('resize', () => {
+        drawCampusMap();
+      });
+    });
+
+    // Firebase & Fallback Initializer
+    async function setupFirebaseOrFallback() {
+      const syncText = document.getElementById('syncText');
+      const connectionStatus = document.getElementById('connectionStatus');
+
+      try {
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined') {
+          firebaseConfig = JSON.parse(__firebase_config);
+        }
+
+        if (firebaseConfig) {
+          const app = initializeApp(firebaseConfig);
+          const auth = getAuth(app);
+          const db = getFirestore(app);
+
+          window.AppState.db = db;
+          window.AppState.auth = auth;
+
+          // Auth execution
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+
+          window.AppState.isFirebaseActive = true;
+          syncText.textContent = "Firebase Live Sync";
+          
+          // Setup Firestore Real-time listener
+          // Path: /artifacts/{appId}/public/data/incidents
+          const incidentsColRef = collection(db, 'artifacts', window.AppState.appId, 'public', 'data', 'incidents');
+          
+          onSnapshot(incidentsColRef, (snapshot) => {
+            if (snapshot.empty) {
+              // Populate seed data if empty
+              initialDemoIncidents.forEach(item => {
+                setDoc(doc(db, 'artifacts', window.AppState.appId, 'public', 'data', 'incidents', item.id), item);
+              });
+            } else {
+              const loaded = [];
+              snapshot.forEach(docSnap => loaded.push(docSnap.data()));
+              // Sort newest first
+              loaded.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+              window.AppState.incidents = loaded;
+              renderAllViews();
+            }
+          }, (err) => {
+            console.warn("Firestore error, switching to reactive local state:", err);
+            useLocalFallbackState();
+          });
+
+        } else {
+          useLocalFallbackState();
+        }
+      } catch (err) {
+        console.warn("Firebase Init Error, falling back to local memory:", err);
+        useLocalFallbackState();
+      }
+    }
+
+    function useLocalFallbackState() {
+      window.AppState.isFirebaseActive = false;
+      window.AppState.incidents = [...initialDemoIncidents];
+      const syncText = document.getElementById('syncText');
+      if (syncText) syncText.textContent = "Local Session Sync";
+      renderAllViews();
+    }
+
+    // Role Switching Logic
+    window.switchRole = function(role) {
+      window.AppState.role = role;
+      const studentNav = document.getElementById('navStudentBtn');
+      const securityNav = document.getElementById('navSecurityBtn');
+      const studentView = document.getElementById('studentPortalView');
+      const securityView = document.getElementById('securityDashboardView');
+
+      if (role === 'student') {
+        studentNav.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-red-600 text-white shadow-md";
+        securityNav.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white";
+        studentView.classList.remove('hidden');
+        securityView.classList.add('hidden');
+      } else {
+        securityNav.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-red-600 text-white shadow-md";
+        studentNav.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white";
+        securityView.classList.remove('hidden');
+        studentView.classList.add('hidden');
+        // Redraw canvas map on tab render
+        setTimeout(() => drawCampusMap(), 100);
+      }
+    };
+
+    // Panic Button 3-Second Countdown
+    window.triggerPanicCountdown = function() {
+      const sosPanicBtn = document.getElementById('sosPanicBtn');
+      const sosCountdownContainer = document.getElementById('sosCountdownContainer');
+      const sosBtnLabel = document.getElementById('sosBtnLabel');
+      
+      if (window.AppState.panicCountdownTimer) return; // Already running
+
+      sosBtnLabel.textContent = "ARMED!";
+      sosCountdownContainer.classList.remove('hidden');
+      window.AppState.panicCountdownValue = 3;
+      document.getElementById('sosTimerNum').textContent = "3";
+      document.getElementById('sosTimerText').textContent = "03";
+
+      window.AppState.panicCountdownTimer = setInterval(() => {
+        window.AppState.panicCountdownValue -= 1;
+        document.getElementById('sosTimerNum').textContent = window.AppState.panicCountdownValue;
+        document.getElementById('sosTimerText').textContent = `0${window.AppState.panicCountdownValue}`;
+
+        if (window.AppState.panicCountdownValue <= 0) {
+          clearInterval(window.AppState.panicCountdownTimer);
+          window.AppState.panicCountdownTimer = null;
+          sosCountdownContainer.classList.add('hidden');
+          sosBtnLabel.textContent = "PRESS SOS";
+          
+          // Submit Urgent Panic Emergency
+          dispatchQuickSOS();
+        }
+      }, 1000);
+    };
+
+    window.cancelPanicCountdown = function() {
+      if (window.AppState.panicCountdownTimer) {
+        clearInterval(window.AppState.panicCountdownTimer);
+        window.AppState.panicCountdownTimer = null;
+      }
+      document.getElementById('sosCountdownContainer').classList.add('hidden');
+      document.getElementById('sosBtnLabel').textContent = "PRESS SOS";
+    };
+
+    // Dispatch Quick SOS Function
+    async function dispatchQuickSOS() {
+      const newIncident = {
+        id: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
+        timestamp: new Date().toISOString(),
+        category: "Security / Threat",
+        severity: "Critical",
+        location: "Hostel Block B (South)",
+        coords: window.CampusLocations['Hostel Block B (South)'],
+        description: "URGENT PANIC BUTTON TRIGGERED BY STUDENT. IMMEDIATE RESPONSE REQUIRED.",
+        reporter: `${window.AppState.currentUserName} (${window.AppState.currentUserId})`,
+        status: "Pending",
+        assignedOfficer: "Unassigned",
+        notes: "Automated GPS beacon ping activated."
+      };
+
+      await saveIncident(newIncident);
+      playAlarmSound();
+      showToast("🔴 PANIC SOS SENT! Campus Security dispatched to your location.", "red");
+    }
+
+    // Submit Custom Incident Form
+    window.handleFormSubmit = async function(e) {
+      e.preventDefault();
+      
+      const category = document.getElementById('reportCategory').value;
+      const severity = document.getElementById('reportSeverity').value;
+      const location = document.getElementById('reportLocation').value;
+      const description = document.getElementById('reportDescription').value;
+
+      const newIncident = {
+        id: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
+        timestamp: new Date().toISOString(),
+        category,
+        severity,
+        location,
+        coords: window.CampusLocations[location] || { x: 300, y: 180 },
+        description,
+        reporter: `${window.AppState.currentUserName} (${window.AppState.currentUserId})`,
+        status: "Pending",
+        assignedOfficer: "Unassigned",
+        notes: ""
+      };
+
+      await saveIncident(newIncident);
+      document.getElementById('incidentReportForm').reset();
+      showToast("Emergency report transmitted to Command Center.", "green");
+    };
+
+    // Data Save Helper (Firebase or Fallback)
+    async function saveIncident(incidentObj) {
+      if (window.AppState.isFirebaseActive && window.AppState.db) {
+        try {
+          await setDoc(doc(window.AppState.db, 'artifacts', window.AppState.appId, 'public', 'data', 'incidents', incidentObj.id), incidentObj);
+        } catch (err) {
+          console.error("Firebase save failed, falling back local:", err);
+          window.AppState.incidents.unshift(incidentObj);
+          renderAllViews();
+        }
+      } else {
+        window.AppState.incidents.unshift(incidentObj);
+        renderAllViews();
+      }
+    }
+
+    // Update Incident Status/Officer from Command Dashboard
+    window.updateIncidentDetails = async function(id) {
+      const statusSelect = document.getElementById(`statusSelect_${id}`);
+      const officerSelect = document.getElementById(`officerSelect_${id}`);
+      const notesInput = document.getElementById(`notesInput_${id}`);
+
+      if (!statusSelect) return;
+
+      const updatedFields = {
+        status: statusSelect.value,
+        assignedOfficer: officerSelect.value,
+        notes: notesInput.value
+      };
+
+      if (window.AppState.isFirebaseActive && window.AppState.db) {
+        try {
+          const docRef = doc(window.AppState.db, 'artifacts', window.AppState.appId, 'public', 'data', 'incidents', id);
+          await updateDoc(docRef, updatedFields);
+        } catch (err) {
+          console.error("Firebase update failed:", err);
+          updateLocalIncident(id, updatedFields);
+        }
+      } else {
+        updateLocalIncident(id, updatedFields);
+      }
+
+      showToast(`Incident ${id} updated successfully.`, "blue");
+    };
+
+    function updateLocalIncident(id, fields) {
+      const idx = window.AppState.incidents.findIndex(item => item.id === id);
+      if (idx !== -1) {
+        window.AppState.incidents[idx] = { ...window.AppState.incidents[idx], ...fields };
+        renderAllViews();
+      }
+    }
+
+    // Master View Render
+    function renderAllViews() {
+      renderStudentHistory();
+      renderSecurityFeed();
+      renderSecurityArchiveTable();
+      renderDashboardStats();
+      drawCampusMap();
+      renderInspectorCard();
+    }
+
+    // Render Student History
+    function renderStudentHistory() {
+      const tbody = document.getElementById('studentHistoryTableBody');
+      if (!tbody) return;
+
+      // Filter incidents reported by current student or all for demo
+      const userIncidents = window.AppState.incidents;
+
+      if (userIncidents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500">No emergency reports submitted yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = userIncidents.map(item => {
+        const timeFormatted = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const severityBadge = getSeverityBadge(item.severity);
+        const statusBadge = getStatusBadge(item.status);
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 font-mono font-bold text-red-400">${item.id}</td>
+            <td class="py-3 text-slate-400">${timeFormatted}</td>
+            <td class="py-3 font-medium text-slate-200">${item.category}</td>
+            <td class="py-3 text-slate-300">${item.location}</td>
+            <td class="py-3">${severityBadge}</td>
+            <td class="py-3">${statusBadge}</td>
+            <td class="py-3 text-right">
+              <button onclick="inspectIncident('${item.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px] border border-slate-700">
+                View Response
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render Command Security Live Feed Cards
+    function renderSecurityFeed() {
+      const feedContainer = document.getElementById('liveSecurityFeed');
+      if (!feedContainer) return;
+
+      let filtered = window.AppState.incidents;
+      if (window.AppState.filterCategory !== 'all') {
+        filtered = filtered.filter(i => i.status === window.AppState.filterCategory);
+      }
+
+      if (filtered.length === 0) {
+        feedContainer.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">No incidents matching filter.</div>`;
+        return;
+      }
+
+      feedContainer.innerHTML = filtered.map(item => {
+        const isSelected = window.AppState.selectedIncidentId === item.id;
+        const timeAgo = getTimeAgo(item.timestamp);
+        const severityClass = item.severity === 'Critical' ? 'border-l-4 border-l-red-500' : (item.severity === 'High' ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-amber-500');
+
+        return `
+          <div onclick="selectIncident('${item.id}')" class="p-3.5 rounded-2xl bg-slate-950/80 border ${isSelected ? 'border-red-500 shadow-lg shadow-red-950/50' : 'border-slate-800'} ${severityClass} hover:border-slate-700 cursor-pointer transition">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono text-xs font-extrabold text-red-400">${item.id}</span>
+              <span class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> ${timeAgo}</span>
+            </div>
+            
+            <div class="font-bold text-slate-100 text-xs sm:text-sm mb-1">${item.category}</div>
+            
+            <div class="text-[11px] text-slate-300 mb-2 line-clamp-2">${item.description}</div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-900 text-[11px]">
+              <span class="text-slate-400"><i class="fa-solid fa-location-dot text-red-400"></i> ${item.location}</span>
+              ${getStatusBadge(item.status)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render Selected Incident Control Inspector Box
+    function renderInspectorCard() {
+      const container = document.getElementById('incidentInspectorCard');
+      if (!container) return;
+
+      const incident = window.AppState.incidents.find(i => i.id === window.AppState.selectedIncidentId);
+
+      if (!incident) {
+        container.innerHTML = `
+          <div class="text-xs text-slate-400 text-center py-6">
+            <i class="fa-solid fa-hand-pointer text-2xl text-slate-600 mb-2 block"></i>
+            Select an incident from the live feed or campus map to manage response and dispatch officers.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-mono text-sm font-black text-red-400">${incident.id}</span>
+                ${getSeverityBadge(incident.severity)}
+              </div>
+              <h4 class="text-base font-bold text-white mt-1">${incident.category}</h4>
+              <p class="text-xs text-slate-400"><i class="fa-solid fa-user"></i> Reported by: ${incident.reporter}</p>
+            </div>
+            <div>
+              ${getStatusBadge(incident.status)}
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <div class="text-slate-500 text-[10px] uppercase font-bold mb-1">Incident Description</div>
+            ${incident.description}
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Update Status</label>
+              <select id="statusSelect_${incident.id}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200">
+                <option value="Pending" ${incident.status === 'Pending' ? 'selected' : ''}>🚨 Pending</option>
+                <option value="Dispatched" ${incident.status === 'Dispatched' ? 'selected' : ''}>🚔 Dispatched</option>
+                <option value="On Scene" ${incident.status === 'On Scene' ? 'selected' : ''}>🛡️ On Scene</option>
+                <option value="Resolved" ${incident.status === 'Resolved' ? 'selected' : ''}>✅ Resolved</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Assigned Security Officer</label>
+              <select id="officerSelect_${incident.id}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200">
+                <option value="Unassigned" ${incident.assignedOfficer === 'Unassigned' ? 'selected' : ''}>Unassigned</option>
+                <option value="Officer B. Davis" ${incident.assignedOfficer === 'Officer B. Davis' ? 'selected' : ''}>Officer B. Davis</option>
+                <option value="Officer M. Rodriguez" ${incident.assignedOfficer === 'Officer M. Rodriguez' ? 'selected' : ''}>Officer M. Rodriguez</option>
+                <option value="Unit 4 - Tactical Patrol" ${incident.assignedOfficer === 'Unit 4 - Tactical Patrol' ? 'selected' : ''}>Unit 4 - Tactical Patrol</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Dispatch Notes</label>
+              <input type="text" id="notesInput_${incident.id}" value="${incident.notes || ''}" placeholder="Add response notes..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200">
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button onclick="updateIncidentDetails('${incident.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+              <i class="fa-solid fa-floppy-disk"></i> Save & Broadcast Update
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Security Log Archive Table
+    function renderSecurityArchiveTable() {
+      const tbody = document.getElementById('securityLogTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = window.AppState.incidents.map(item => {
+        const timeFormatted = new Date(item.timestamp).toLocaleString();
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 font-mono font-bold text-slate-300">${item.id}</td>
+            <td class="py-3 text-slate-400">${timeFormatted}</td>
+            <td class="py-3 font-medium text-slate-200">${item.category}</td>
+            <td class="py-3 text-slate-400">${item.reporter}</td>
+            <td class="py-3 text-slate-300">${item.location}</td>
+            <td class="py-3">${getSeverityBadge(item.severity)}</td>
+            <td class="py-3">${getStatusBadge(item.status)}</td>
+            <td class="py-3 text-slate-300">${item.assignedOfficer}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Update Dashboard Top Statistics
+    function renderDashboardStats() {
+      const totalEl = document.getElementById('statTotalIncidents');
+      const activeEl = document.getElementById('statActiveIncidents');
+      const navBadge = document.getElementById('navAlertBadge');
+
+      if (!totalEl || !activeEl) return;
+
+      const total = window.AppState.incidents.length;
+      const active = window.AppState.incidents.filter(i => i.status !== 'Resolved').length;
+
+      totalEl.textContent = total;
+      activeEl.textContent = active;
+
+      if (navBadge) {
+        if (active > 0) {
+          navBadge.textContent = active;
+          navBadge.classList.remove('hidden');
+        } else {
+          navBadge.classList.add('hidden');
+        }
+      }
+    }
+
+    // Interactive Campus Security Map Drawing
+    function initCanvasMap() {
+      const canvas = document.getElementById('campusMapCanvas');
+      if (!canvas) return;
+
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        // Check pin click collision
+        window.AppState.incidents.forEach(item => {
+          if (item.coords) {
+            const dist = Math.hypot(item.coords.x - clickX, item.coords.y - clickY);
+            if (dist < 18) {
+              selectIncident(item.id);
+            }
+          }
+        });
+      });
+    }
+
+    function drawCampusMap() {
+      const canvas = document.getElementById('campusMapCanvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      // Fix resolution scaling
+      canvas.width = canvas.parentElement.clientWidth || 600;
+      canvas.height = canvas.parentElement.clientHeight || 320;
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // 1. Draw Map Background Grid / Tech Terrain
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, w, h);
+
+      // Grid Lines
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // 2. Draw Campus Pathways
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(100, 170); ctx.lineTo(500, 170); // Main Boulevard
+      ctx.moveTo(320, 50); ctx.lineTo(320, 300);  // Central Avenue
+      ctx.stroke();
+
+      // 3. Draw Campus Building Blocks
+      Object.keys(window.CampusLocations).forEach(locName => {
+        const loc = window.CampusLocations[locName];
+        
+        // Building box
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(loc.x - 35, loc.y - 20, 70, 40, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(locName.split(' ')[0], loc.x, loc.y + 30);
+      });
+
+      // 4. Draw Active Incident Pins with Pulsing Radar Effect
+      window.AppState.incidents.forEach(item => {
+        if (!item.coords) return;
+
+        const isSelected = window.AppState.selectedIncidentId === item.id;
+        const color = item.severity === 'Critical' ? '#ef4444' : (item.severity === 'High' ? '#f97316' : '#f59e0b');
+
+        // Draw Pulsing Radar Circle for active emergencies
+        if (item.status !== 'Resolved') {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(item.coords.x, item.coords.y, 14, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Pin Center Dot
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(item.coords.x, item.coords.y, isSelected ? 9 : 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // White Center Icon Core
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(item.coords.x, item.coords.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // ID Label Tag above pin
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText(item.id, item.coords.x, item.coords.y - 12);
+      });
+    }
+
+    // Helper functions & utilities
+    window.selectIncident = function(id) {
+      window.AppState.selectedIncidentId = id;
+      renderSecurityFeed();
+      renderInspectorCard();
+      drawCampusMap();
+    };
+
+    window.inspectIncident = function(id) {
+      switchRole('security');
+      selectIncident(id);
+    };
+
+    window.filterFeed = function(status) {
+      window.AppState.filterCategory = status;
+      ['All', 'Pending', 'Dispatched', 'Resolved'].forEach(s => {
+        const btn = document.getElementById(`filter${s}Btn`);
+        if (btn) {
+          if (s.toLowerCase() === status.toLowerCase()) {
+            btn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white";
+          } else {
+            btn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white";
+          }
+        }
+      });
+      renderSecurityFeed();
+    };
+
+    window.toggleAudioAlerts = function() {
+      window.AppState.audioEnabled = !window.AppState.audioEnabled;
+      const icon = document.getElementById('audioIcon');
+      if (icon) {
+        icon.className = window.AppState.audioEnabled ? "fa-solid fa-volume-high text-red-400" : "fa-solid fa-volume-xmark text-slate-500";
+      }
+    };
+
+    function playAlarmSound() {
+      if (!window.AppState.audioEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.4);
+
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch (e) {
+        // Audio playback restricted without user interaction
+      }
+    }
+
+    function getSeverityBadge(severity) {
+      if (severity === 'Critical') {
+        return `<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-bold text-[10px]">🔴 Critical</span>`;
+      } else if (severity === 'High') {
+        return `<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold text-[10px]">🟠 High</span>`;
+      } else if (severity === 'Medium') {
+        return `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px]">🟡 Medium</span>`;
+      }
+      return `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px]">🟢 Low</span>`;
+    }
+
+    function getStatusBadge(status) {
+      if (status === 'Pending') {
+        return `<span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 font-semibold text-[10px]">Pending</span>`;
+      } else if (status === 'Dispatched') {
+        return `<span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold text-[10px]">Dispatched</span>`;
+      } else if (status === 'On Scene') {
+        return `<span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold text-[10px]">On Scene</span>`;
+      }
+      return `<span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[10px]">Resolved</span>`;
+    }
+
+    function getTimeAgo(isoString) {
+      const diffSecs = Math.floor((new Date() - new Date(isoString)) / 1000);
+      if (diffSecs < 60) return `${diffSecs}s ago`;
+      if (diffSecs < 3600) return `${Math.floor(diffSecs / 60)}m ago`;
+      return `${Math.floor(diffSecs / 3600)}h ago`;
+    }
+
+    window.updateSelectedLocationFromDropdown = function() {
+      const val = document.getElementById('reportLocation').value;
+      const coords = window.CampusLocations[val] || { x: 300, y: 180 };
+      document.getElementById('reportCoords').value = `X: ${coords.x}, Y: ${coords.y}`;
+    };
+
+    window.simulateGpsFix = function() {
+      showToast("GPS coordinates updated from device sensor.", "blue");
+    };
+
+    window.toggleUserModal = function() {
+      const modal = document.getElementById('userModal');
+      modal.classList.toggle('hidden');
+    };
+
+    window.resetDemoData = function() {
+      window.AppState.incidents = [...initialDemoIncidents];
+      renderAllViews();
+      toggleUserModal();
+      showToast("Demo state re-initialized.", "blue");
+    };
+
+    window.filterLogTable = function() {
+      const query = document.getElementById('logSearchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#securityLogTableBody tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    };
+
+    // UI Toast Notification
+    function showToast(message, color = 'red') {
+      const toast = document.createElement('div');
+      const bgClass = color === 'red' ? 'bg-red-600' : (color === 'green' ? 'bg-emerald-600' : 'bg-blue-600');
+      toast.className = `fixed bottom-5 right-5 ${bgClass} text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 flex items-center space-x-2 transition-all duration-300 transform translate-y-10 opacity-0`;
+      toast.innerHTML = `<i class="fa-solid fa-bell"></i> <span>${message}</span>`;
+      
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
